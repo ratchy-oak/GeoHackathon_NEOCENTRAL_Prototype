@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NEO CENTRAL – City Overview</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg:#0b1224;--panel:#0e1a33;--glass:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.1);--text:#e7f4ff;--accent:#34e1ff;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    .container-page{max-width:1100px;margin:0 auto;padding:30px}
+    .map-box{height:420px;border-radius:16px;overflow:hidden;border:1px solid var(--line);margin-bottom:20px}
+    .slider-block{background:var(--glass);border-radius:12px;padding:16px;margin-bottom:16px}
+    h2{font-weight:800;color:#7de9ff;text-shadow:0 0 10px rgba(125,233,255,.3)}
+    .score-pill{background:linear-gradient(90deg,#34e1ff,#39ffa8);color:#001821;font-weight:800;padding:.4rem .8rem;border-radius:.6rem}
+    .form-range::-webkit-slider-thumb{background:#66e0ff}
+  </style>
+</head>
+<body>
+  <div class="container-page">
+    <a href="index.html" class="text-info">&larr; Back</a>
+    <h2 id="cityTitle">Province Overview</h2>
+    <div id="baseScoreContainer" class="mb-3">Base Score: <span id="baseScore" class="score-pill">--</span></div>
+    <div class="map-box" id="map"></div>
+
+    <div class="slider-block">
+      <label class="form-label">🌿 NDVI (Green Index)</label>
+      <input type="range" id="nvdiSlider" min="0" max="100" class="form-range" oninput="updateValue(this)">
+      <div>Value: <span id="nvdiSliderValue">--</span></div>
+    </div>
+    <div class="slider-block">
+      <label class="form-label">💧 NDWI (Water Index)</label>
+      <input type="range" id="waterSlider" min="0" max="100" class="form-range" oninput="updateValue(this)">
+      <div>Value: <span id="waterSliderValue">--</span></div>
+    </div>
+    <div class="slider-block">
+      <label class="form-label">🏙️ NDBI (Urban Density)</label>
+      <input type="range" id="ndbiSlider" min="0" max="100" class="form-range" oninput="updateValue(this)">
+      <div>Value: <span id="ndbiSliderValue">--</span></div>
+    </div>
+    <div class="slider-block">
+      <label class="form-label">🌬️ Air Quality</label>
+      <input type="range" id="airSlider" min="0" max="100" class="form-range" oninput="updateValue(this)">
+      <div>Value: <span id="airSliderValue">--</span></div>
+    </div>
+    <div class="slider-block">
+      <label class="form-label">🚗 Road Network</label>
+      <input type="range" id="roadsSlider" min="0" max="100" class="form-range" oninput="updateValue(this)">
+      <div>Value: <span id="roadsSliderValue">--</span></div>
+    </div>
+    <div class="slider-block">
+      <label class="form-label">🌊 Flood Risk</label>
+      <input type="range" id="floodSlider" min="0" max="100" class="form-range" oninput="updateValue(this)">
+      <div>Value: <span id="floodSliderValue">--</span></div>
+    </div>
+
+    <h4>Adjusted Score: <span id="adjustedScore" class="score-pill">--</span></h4>
+    <canvas id="radarChart" height="300"></canvas>
+  </div>
+
+  <script>
+    let map, radar;
+
+    async function initCityPage() {
+      const params = new URLSearchParams(location.search);
+      const provinceName = params.get('province');
+      const res = await fetch('data/provinces.json');
+      const data = await res.json();
+      const p = data.find(x => x.province === provinceName) || data[0];
+
+      document.getElementById('cityTitle').textContent = p.province + ' – City Overview';
+      document.getElementById('baseScore').textContent = p.score;
+
+      setSlider('nvdiSlider', p.ndvi * 100);
+      setSlider('waterSlider', p.ndwi * 100);
+      setSlider('ndbiSlider', p.ndbi * 100);
+      setSlider('airSlider', p.air_quality);
+      setSlider('roadsSlider', p.roads);
+      setSlider('floodSlider', p.flood_risk);
+
+      updateRadarChart();
+      calculateAdjustedScore();
+
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat:p.lat, lng:p.lng}, zoom:7,
+        styles:[{elementType:"geometry",stylers:[{color:"#0f172a"}]},
+                {elementType:"labels.text.stroke",stylers:[{color:"#0f172a"}]},
+                {elementType:"labels.text.fill",stylers:[{color:"#9ab9e0"}]}]
+      });
+    }
+
+    function setSlider(id,val){const el=document.getElementById(id);const span=document.getElementById(id+'Value');el.value=Math.round(val);span.textContent=Math.round(val);}
+    function updateValue(sl){document.getElementById(sl.id+'Value').textContent=sl.value;calculateAdjustedScore();updateRadarChart();}
+
+    function calculateAdjustedScore(){
+      const ids=['nvdiSlider','waterSlider','ndbiSlider','airSlider','roadsSlider','floodSlider'];
+      const sum=ids.reduce((a,id)=>a+Number(document.getElementById(id).value),0);
+      const avg=Math.round(sum/ids.length);
+      document.getElementById('adjustedScore').textContent=avg;
+    }
+
+    function updateRadarChart(){
+      const vals=['nvdiSlider','waterSlider','ndbiSlider','airSlider','roadsSlider','floodSlider'].map(id=>Number(document.getElementById(id).value)/100);
+      const ctx=document.getElementById('radarChart').getContext('2d');
+      if(radar) radar.destroy();
+      radar=new Chart(ctx,{type:'radar',
+        data:{labels:['NDVI','NDWI','NDBI','Air','Roads','Flood'],
+          datasets:[{label:'Indices',data:vals,backgroundColor:'rgba(52,225,255,0.2)',borderColor:'#34e1ff',borderWidth:2}]},
+        options:{scales:{r:{min:0,max:1,grid:{color:'#1f2f52'},angleLines:{color:'#1f2f52'},pointLabels:{color:'#b9d7f6'}}},
+          plugins:{legend:{labels:{color:'#d9f0ff'}}}}
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', initCityPage);
+  </script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initCityPage"></script>
+</body>
+</html>

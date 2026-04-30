@@ -1,0 +1,44 @@
+[
+  {
+    "province": "Chiang Mai",
+    "score": 80,
+    "ndvi": 0.68,
+    "ndwi": 0.42,
+    "ndbi": 0.28,
+    "air_quality": 75,
+    "water_resource": 82,
+    "soil_quality": 79,
+    "roads": 73,
+    "flood_risk": 60,
+    "lat": 18.7877,
+    "lng": 98.9931
+  },
+  {
+    "province": "Phuket",
+    "score": 78,
+    "ndvi": 0.55,
+    "ndwi": 0.46,
+    "ndbi": 0.35,
+    "air_quality": 85,
+    "water_resource": 80,
+    "soil_quality": 76,
+    "roads": 78,
+    "flood_risk": 70,
+    "lat": 7.8804,
+    "lng": 98.3923
+  },
+  {
+    "province": "Bangkok",
+    "score": 77,
+    "ndvi": 0.33,
+    "ndwi": 0.28,
+    "ndbi": 0.72,
+    "air_quality": 65,
+    "water_resource": 62,
+    "soil_quality": 50,
+    "roads": 85,
+    "flood_risk": 45,
+    "lat": 13.7563,
+    "lng": 100.5018
+  }
+]

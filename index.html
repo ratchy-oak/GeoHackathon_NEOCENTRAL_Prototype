@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEO CENTRAL – Smart Capital Ranking Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1224; --bg2:#0e1a33; --glass:rgba(255,255,255,0.06);
+      --line:rgba(255,255,255,0.08); --text:#e5f2ff; --muted:#8fb3d9;
+      --accent:#34e1ff; --accent2:#39ffa8;
+    }
+    html,body{height:100%}
+    body{
+      background:radial-gradient(1200px 600px at 20% -10%, #102042 0%, transparent 60%),
+                 radial-gradient(1000px 800px at 100% 0%, #081127 0%, transparent 70%),
+                 var(--bg);
+      color:var(--text);
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+      overflow-x:hidden;
+    }
+    header{padding:48px 16px 8px}
+    h1{text-align:center;font-weight:800;letter-spacing:.5px;color:#66e0ff;text-shadow:0 0 20px rgba(52,225,255,.25)}
+    .subtitle{color:var(--muted);text-align:center;margin-top:6px}
+    .stage{
+      max-width:1100px;margin:28px auto;padding:24px;
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--line);border-radius:18px;
+      box-shadow:0 10px 40px rgba(0,0,0,.35);
+    }
+    table.table-dark{
+      --bs-table-bg:var(--glass);--bs-table-striped-bg:rgba(255,255,255,.03);
+      --bs-table-hover-bg:rgba(255,255,255,.07);
+      border-radius:14px;overflow:hidden;
+    }
+    thead th{text-transform:uppercase;letter-spacing:.04em;font-size:.8rem;color:#bfe7ff;border-bottom:1px solid var(--line)!important}
+    tbody td{color:#eaf6ff}
+    tbody tr{transition:.15s transform;cursor:pointer}
+    tbody tr:hover{transform:scale(1.005)}
+    .badge-score{
+      background:linear-gradient(90deg, var(--accent), var(--accent2));
+      color:#001821;font-weight:800;border:0;padding:.38rem .6rem;border-radius:.6rem;
+      box-shadow:0 4px 20px rgba(57,255,168,.25);
+    }
+    footer{color:#7ea8d1;text-align:center;margin:24px 0 40px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>NEO CENTRAL – Smart Capital Ranking</h1>
+    <div class="subtitle">Ranking provinces from THEOS-2 data analysis</div>
+  </header>
+
+  <div class="stage">
+    <div class="table-responsive">
+      <table class="table table-dark table-striped table-hover align-middle mb-0 table-custom">
+        <thead>
+          <tr>
+            <th style="width:64px">#</th>
+            <th>Province</th>
+            <th style="width:120px">AI Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="3" class="text-center text-muted py-4">Loading data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>© 2025 NEO CENTRAL | THEOS-2 Hackathon Prototype</footer>
+
+  <script>
+    async function loadProvinces() {
+      try {
+        const res = await fetch('data/provinces.json');
+        const provinces = await res.json();
+        provinces.sort((a,b)=>b.score - a.score);
+        const tbody = document.querySelector('.table-custom tbody');
+        tbody.innerHTML = '';
+
+        provinces.forEach((p, i) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="text-center"><span class="fw-bold text-info">${i+1}</span></td>
+            <td class="fw-semibold">${p.province}</td>
+            <td><span class="badge-score">${p.score}</span></td>`;
+          row.addEventListener('click', () => {
+            window.location.href = 'city.html?province=' + encodeURIComponent(p.province);
+          });
+          tbody.appendChild(row);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    window.addEventListener('DOMContentLoaded', loadProvinces);
+  </script>
+</body>
+</html>
